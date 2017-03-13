@@ -49,6 +49,9 @@ class Zip {
       return
     }
 
+    zipPath = zipPath.replace(/\\/g, '/')
+    localPath = fs.realpathSync(localPath.replace(/\\/g, '/'))
+
     // Ensure slash.
     zipPath = zipPath.endsWith('/') ? zipPath : `${zipPath}/`
 
@@ -57,6 +60,7 @@ class Zip {
       let subLocalPath = items[i]
       let subZipPath = zipPath + subLocalPath.substr(localPath.length + 1)
       this.addLocalFile(subLocalPath, subZipPath)
+      console.log(subZipPath)
       callback && callback(subLocalPath, subZipPath)
     }
   }
