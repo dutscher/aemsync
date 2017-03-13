@@ -1,9 +1,9 @@
 'use strict'
 
 const chalk = require('chalk')
-const ContentHandler = require('./handlers/content-handler.js')
-const Package = require('./package.js')
-const Sender = require('./sender.js')
+const ContentHandler = require('./handlers/content-handler.js').ContentHandler
+const Package = require('./package.js').Package
+const Sender = require('./sender.js').Sender
 const log = require('./log.js')
 
 /** Pushes changes to AEM. */
@@ -24,7 +24,7 @@ class Pusher {
     }, this.interval)
   }
 
-  enqueue (localPath) {
+  addItem (localPath) {
     this.queue.push(localPath)
   }
 
@@ -42,67 +42,51 @@ class Pusher {
     while (this.queue.length > 0) {
       dict[this.queue.pop()] = true
     }
+    let localPaths = Object.keys(dict)
 
-    // Get all the items.
-    let list = []
-    Object.keys(dict).forEach(localPath => {
-      this.handlers.forEach(handler => {
-        let processedPath = handler.process(localPath)
-        processedPath && list.push(processedPath)
-      })
-    })
+    // Process local paths with all the handlers.
+    let items = []
+    for (let i = 0; i < this.handlers.length; ++i) {
+      for (let j = 0; j < localPaths.length; ++j) {
+        this.handlers[i].process(items, localPaths[j])
+      }
+    }
 
-    // Skip if no items to add to package ...
-    if (list.length === 0) {
+    if (items.length === 0) {
       return
     }
 
-    // .. otherwise, process.
-    this.process(list, err => {
-      if (err) {
-        // Restore the queue if anything goes wrong.
-        // It will be processed in the next tick.
-        this.queue = this.queue.concat(list)
-      }
+    // Create package.
+    let pack = new Package()
+    for (let i = 0; i < items.length; ++i) {
+      let item = items[i]
+      log.info(item.action, chalk.yellow(item.zipPath))
+      pack.update(item.localPath, item.zipPath, item.action)
+    }
+
+    // Save the package.
+    log.group()
+    this.lock = this.targets.length
+    pack.save((packagePath) => {
+      this.onSend(packagePath)
     })
   }
 
-  process (list, callback) {
-    // Finalization function.
-    let finalize = (err) => {
-      this.lock = err ? 0 : this.lock - 1
-      if (this.lock === 0) {
-        callback(err)
-        log.groupEnd()
+  onSend (packagePath) {
+    this.sender.send(packagePath, (err, host, delta, time) => {
+      let prefix = `Deploying to [${chalk.yellow(host)}] in ${delta} ms at ${time}`
+
+      if (err) {
+        log.info(`${prefix}: ${chalk.red(err)}`)
+      } else {
+        log.info(`${prefix}: ${chalk.green('OK')}`)
       }
-    }
 
-
-    try {
-      // Add all paths to the package.
-      let pack = new Package()
-      list.forEach(localPath => {
-        let item = pack.add(localPath)
-        item && log.info(item.exists ? 'ADD' : 'DEL', chalk.yellow(item.zipPath))
-      })
-
-      // Save the package.
-      log.group()
-      this.lock = this.targets.length
-      pack.save(packagePath => {
-        // Send the saved package.
-        this.sender.send(packagePath, (err, host, delta, time) => {
-          let prefix = `Deploying to [${chalk.yellow(host)}] in ${delta} ms at ${time}`
-          err ? log.info(`${prefix}: ${chalk.red(err)}`) : log.info(`${prefix}: ${chalk.green('OK')}`)
-          this.onPushEnd(err, host)
-          finalize()
-        })
-      })
-    } catch (err) {
-      log.error(err)
-      finalize(err)
-    }
+      this.onPushEnd(err, host)
+      log.groupEnd()
+      this.lock -= 1
+    })
   }
 }
 
-module.exports = Pusher
+module.exports.Pusher = Pusher

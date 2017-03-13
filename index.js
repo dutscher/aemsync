@@ -5,8 +5,8 @@ const path = require('path')
 const fs = require('graceful-fs')
 const log = require('./src/log.js')
 const chalk = require('chalk')
-const Watcher = require('./src/watcher.js')
-const Pusher = require('./src/pusher.js')
+const Watcher = require('./src/watcher.js').Watcher
+const Pusher = require('./src/pusher.js').Pusher
 
 const MSG_HELP = `Usage: aemsync [OPTIONS]
 
@@ -54,7 +54,7 @@ function main () {
 
   pusher.start()
   watcher.watch(workingDir, exclude, (localPath) => {
-    pusher.enqueue(localPath)
+    pusher.addItem(localPath)
   })
 }
 
