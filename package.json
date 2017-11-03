@@ -1,21 +1,18 @@
 {
   "name": "aemsync-weily",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Adobe AEM Synchronization Tool",
-  "author": "Michal Kochel <gavoja@gmail.com>, Willy Woitas",
+  "author": "Michal Kochel <gavoja@gmail.com>, Willy Woitas, Matthias John <git@bitjo.de>",
   "keywords": [
     "AEM",
     "CQ",
     "Sling",
     "Synchronization"
   ],
-  "homepage": "https://github.com/gavoja/aemsync",
-  "bugs": {
-    "url": "https://github.com/gavoja/aemsync/issues"
-  },
+  "homepage": "https://github.com/bitjoo/aemsync",
   "repository": {
     "type": "git",
-    "url": "https://github.com/gavoja/aemsync.git"
+    "url": "https://github.com/bitjoo/aemsync.git"
   },
   "main": "index.js",
   "dependencies": {

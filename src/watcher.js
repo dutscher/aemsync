@@ -9,8 +9,12 @@ const chalk = require('chalk')
 const PLATFORMS = ['win32', 'darwin']
 
 class Watcher {
+  isFallback() {
+      return PLATFORMS.indexOf(process.platform) === -1
+  }
+
   watch (workingDir, exclude, callback) {
-    if (PLATFORMS.indexOf(process.platform) !== -1) {
+    if (!this.isFallback()) {
       this.watchFolder(workingDir, true, exclude, callback)
     } else {
       log.info(`Scanning folder (may take a while): ${chalk.yellow(workingDir)} ...`)
@@ -50,7 +54,9 @@ class Watcher {
         if (exclude && anymatch(exclude, localPath)) {
           return
         }
-
+        if (this.isFallback()) {
+            this.watchFolderFallback(localPath, exclude, callback)
+        }
         callback(localPath)
       })
     })
