@@ -10,7 +10,7 @@ const PLATFORMS = ['win32', 'darwin']
 
 class Watcher {
   isFallback() {
-      return PLATFORMS.indexOf(process.platform) !== -1
+      return PLATFORMS.indexOf(process.platform) === -1
   }
 
   watch (workingDir, exclude, callback) {
