@@ -20,7 +20,6 @@ const FILTER_CHILDREN = `
   <filter root="%s">
     <exclude pattern="%s/.*" />
     <include pattern="%s" />
-    <include pattern="%s/.*" />
   </filter>`
 
 class Package {
